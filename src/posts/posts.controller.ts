@@ -10,9 +10,12 @@ import {
   Post,
   Put,
   Query,
+  UsePipes,
 } from '@nestjs/common';
 import { PostsService } from './posts.service';
 import { Post as PostInterface } from './interfaces/post.interface';
+import { ZodValidationPipe } from './utils/validators/zodValidator';
+import { createPostDTO, createPostSchema } from './utils/validators/createPostSchema';
 
 @Controller('posts')
 export class PostsController {
@@ -37,8 +40,9 @@ export class PostsController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @UsePipes(new ZodValidationPipe(createPostSchema))
   create(
-    @Body() createPostData: Omit<PostInterface, 'id' | 'createdAt'>,
+    @Body() createPostData: createPostDTO,
   ): PostInterface {
     return this.postsService.create(createPostData);
   }
