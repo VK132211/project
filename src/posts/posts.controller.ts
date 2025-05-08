@@ -19,7 +19,7 @@ import {
   createPostSchema,
 } from './utils/validators/createPostSchema';
 import { Post as PostEntity } from './entities/post.entity';
-import { updatePostDTO } from './utils/validators/updatePostSchema';
+import { updatePostDTO, updatePostSchema } from './utils/validators/updatePostSchema';
 
 @Controller('posts')
 export class PostsController {
@@ -42,6 +42,7 @@ export class PostsController {
   }
 
   @Put(':id')
+  @UsePipes(new ZodValidationPipe(updatePostSchema))
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updatePostData: updatePostDTO,
