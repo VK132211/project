@@ -13,51 +13,45 @@ import {
   UsePipes,
 } from '@nestjs/common';
 import { PostsService } from './posts.service';
-import { Post as PostInterface } from './interfaces/post.interface';
 import { ZodValidationPipe } from './utils/validators/zodValidator';
-import { createPostDTO, createPostSchema } from './utils/validators/createPostSchema';
+import {
+  createPostDTO,
+  createPostSchema,
+} from './utils/validators/createPostSchema';
+import { Post as PostEntity } from './entities/post.entity';
+import { updatePostDTO } from './utils/validators/updatePostSchema';
 
 @Controller('posts')
 export class PostsController {
   constructor(private readonly postsService: PostsService) {}
 
   @Get()
-  findAll(@Query('search') search?: string): PostInterface[] {
-    const extractAllPosts = this.postsService.findAll();
-
-    if (search) {
-      return extractAllPosts.filter((singlePost) =>
-        singlePost.title.includes(search.toLowerCase()),
-      );
-    }
-    return extractAllPosts;
+  async findAll(): Promise<PostEntity[]> {
+    return this.postsService.findAll();
   }
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number): PostInterface {
-    const extractedPost = this.postsService.findOne(id);
-    return extractedPost;
+  async findOne(@Param('id', ParseIntPipe) id: number): Promise<PostEntity> {
+    return this.postsService.findOne(id);
   }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @UsePipes(new ZodValidationPipe(createPostSchema))
-  create(
-    @Body() createPostData: createPostDTO,
-  ): PostInterface {
+  async create(@Body() createPostData: createPostDTO): Promise<PostEntity> {
     return this.postsService.create(createPostData);
   }
 
   @Put(':id')
-  update(
+  async update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() updatePostData: Partial<Omit<PostInterface, 'id' | 'createdAt'>>,
-  ): PostInterface {
+    @Body() updatePostData: updatePostDTO,
+  ): Promise<PostEntity> {
     return this.postsService.update(id, updatePostData);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id', ParseIntPipe) id: number): void {
+  async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
     this.postsService.remove(id);
   }
 }
