@@ -10,6 +10,7 @@ import {
   Post,
   Put,
   Query,
+  UseGuards,
   UsePipes,
 } from '@nestjs/common';
 import { PostsService } from './posts.service';
@@ -19,7 +20,12 @@ import {
   createPostSchema,
 } from './utils/validators/createPostSchema';
 import { Post as PostEntity } from './entities/post.entity';
-import { updatePostDTO, updatePostSchema } from './utils/validators/updatePostSchema';
+import {
+  updatePostDTO,
+  updatePostSchema,
+} from './utils/validators/updatePostSchema';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { currentUser } from 'src/auth/decorators/current-user.decorator';
 
 @Controller('posts')
 export class PostsController {
@@ -34,20 +40,26 @@ export class PostsController {
     return this.postsService.findOne(id);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @UsePipes(new ZodValidationPipe(createPostSchema))
-  async create(@Body() createPostData: createPostDTO): Promise<PostEntity> {
-    return this.postsService.create(createPostData);
+  async create(
+    @Body(new ZodValidationPipe(createPostSchema))
+    createPostData: createPostDTO,
+    @currentUser() user: any,
+  ): Promise<PostEntity> {
+    console.log('Received:', createPostData);
+    return this.postsService.create(createPostData, user);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Put(':id')
-  @UsePipes(new ZodValidationPipe(updatePostSchema))
   async update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() updatePostData: updatePostDTO,
+    @Body(new ZodValidationPipe(updatePostSchema)) updatePostData: updatePostDTO,
+    @currentUser() user: any,
   ): Promise<PostEntity> {
-    return this.postsService.update(id, updatePostData);
+    return this.postsService.update(id, updatePostData, user);
   }
 
   @Delete(':id')
